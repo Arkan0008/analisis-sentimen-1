@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Sentimen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add chartjs-plugin-datalabels CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Keep max-width for charts for readability */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        /* Hide pages by default */
+        .page-content {
+            display: none;
+        }
+        /* Show active page */
+        .page-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
+
+    <!-- Changed: Removed max-w-6xl and mx-auto to allow full width -->
+    <div class="w-full">
+        <div class="browser-mockup bg-white rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/5">
+            <!-- Removed: Browser toolbar section -->
+            <!--
+            <div class="browser-toolbar h-11 bg-gray-200 flex items-center px-4 gap-2 border-b border-gray-300">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div class="flex-grow flex justify-center">
+                    <div class="address-bar bg-gray-100 rounded-full text-sm text-gray-600 px-4 py-1 w-full max-w-md text-center">
+                        https://www.gemini-infographics.app/dashboard
+                    </div>
+                </div>
+                 <div class="w-16"></div>
+            </div>
+            -->
+
+            <div class="dashboard-container grid grid-cols-1 md:grid-cols-[260px_1fr] min-h-[80vh]">
+                <aside class="sidebar bg-gray-50 border-r border-gray-200 p-4 flex flex-col gap-6">
+                    <div class="logo font-bold text-xl text-gray-800">Analisis Sentimen</div>
+                    <nav>
+                        <ul class="space-y-2">
+                            <li><a href="#home" id="nav-home" class="nav-link flex items-center gap-3 px-4 py-2 text-white bg-[#4A90E2] rounded-lg transition-colors shadow-sm font-semibold border-l-4 border-blue-600"><span>🏠</span> Home</a></li>
+                            <li><a href="#daftar" id="nav-daftar" class="nav-link flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"><span>📊</span> Daftar</a></li>
+                            <li><a href="#catatan" id="nav-catatan" class="nav-link flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"><span>📝</span> Catatan</a></li>
+                            <li><a href="#about" id="nav-about" class="nav-link flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"><span>ℹ️</span> About</a></li>
+                        </ul>
+                    </nav>
+                    <div class="mt-4">
+                        <h3 class="px-4 mb-3 text-sm font-semibold text-gray-500 uppercase">Dashboard</h3>
+                        <div class="space-y-3">
+                            <div class="app-button bg-[#61B24E] text-white p-3 rounded-lg shadow-sm">
+                                Total Pelayanan Publik
+                                <div id="total-aplikasi-data" class="text-lg font-bold text-white/90"></div>
+                            </div>
+                            <div class="app-button bg-[#2196F3] text-white p-3 rounded-lg shadow-sm">
+                                Data Twitter
+                                <div id="data-twitter-data" class="text-lg font-bold text-white/90"></div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="main-content bg-white p-6 sm:p-8 overflow-y-auto">
+                    <!-- Dashboard Page Content -->
+                    <div id="home-page" class="page-content active">
+                        <header class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+                            <p class="text-gray-500 mt-1">Selamat datang kembali! Berikut ringkasan data terbaru Anda.</p>
+                            <p class="text-gray-500 mt-1">Sistem informasi ini menyajikan visualisasi analisis sentimen terhadap pelayanan publik pada platform X (Twitter) menggunakan metode Naive Bayes.</p>
+                        </header>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                            <div class="lg:col-span-3 bg-gray-50 p-6 rounded-xl ring-1 ring-gray-200">
+                                <h2 class="text-xl font-semibold text-gray-700 mb-1">Grafik</h2>
+                                <p class="text-gray-500 mb-4 text-sm">Visualisasi total sentimen positif, negatif, dan netral terbaru berdasarkan data bulan Juni 2025.</p>
+                                <div class="chart-container">
+                                    <canvas id="barChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-2 bg-gray-50 p-6 rounded-xl ring-1 ring-gray-200">
+                                 <h2 class="text-xl font-semibold text-gray-700 mb-1">Komposisi Data</h2>
+                                <p class="text-gray-500 mb-4 text-sm">Distribusi keseluruhan sentimen positif, negatif, dan netral.</p>
+                                <div class="chart-container flex items-center justify-center">
+                                    <canvas id="pieChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daftar Page Content -->
+                    <div id="daftar-page" class="page-content">
+                        <header class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800">Daftar Pelayanan Publik</h1>
+                            <p class="text-gray-500 mt-1">Berikut adalah daftar pelayanan publik yang tersedia.</p>
+                        </header>
+                        <div class="bg-gray-50 p-6 rounded-xl ring-1 ring-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Daftar Item</h2>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 justify-items-center">
+                                <!-- Loop through appsData to generate items -->
+                                <!-- We'll use JavaScript to generate these dynamically for cleaner HTML -->
+                                <!-- Example item template (will be generated by JS) -->
+                                <!--
+                                <div class="flex flex-col items-center p-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 w-full max-w-[120px] cursor-pointer" onclick="setActivePage('detail-layanan-page', null, 'Sistem Informasi Alpha')">
+                                    <img src="https://placehold.co/80x80/aabbcc/ffffff?text=App1" alt="Sistem Informasi 1" class="w-20 h-20 rounded-full mb-2 object-cover">
+                                    <p class="text-gray-700 text-sm font-medium text-center">Sistem Informasi Alpha</p>
+                                </div>
+                                -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Layanan Page Content -->
+                    <div id="detail-layanan-page" class="page-content">
+                        <!-- Moved: Kembali ke Daftar button to the very top -->
+                        <div class="mt-2 mb-6"> <!-- Added margin to separate from content -->
+                            <button onclick="setActivePage('daftar-page', 'nav-daftar', null, true)" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors">Kembali ke Daftar</button>
+                        </div>
+
+                        <header class="mb-4"> <!-- Adjusted margin-bottom for spacing -->
+                            <h1 class="text-3xl font-bold text-gray-800" id="detail-layanan-title">Detail Layanan</h1>
+                            <p class="text-gray-500 mt-1" id="detail-layanan-description">Informasi lebih lanjut tentang layanan ini akan ditampilkan di sini.</p>
+                        </header>
+                        
+                        <div class="bg-gray-50 p-6 rounded-xl ring-1 ring-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Informasi Rinci</h2>
+                            <p class="text-gray-700">Ini adalah area untuk deskripsi detail, statistik, fitur, atau data lain yang relevan dengan <span id="detail-layanan-item-name" class="font-bold"></span>.</p>
+                            
+                            <!-- Dynamic content area for app-specific text -->
+                            <div id="app-specific-description" class="mt-4 text-sm text-gray-600">
+                                <!-- Content will be inserted here by JS -->
+                            </div>
+
+                            <!-- Static containers for charts and word cloud -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                                <div class="col-span-1 bg-white p-4 rounded-xl ring-1 ring-gray-200">
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Analisis Sentimen (Detail)</h3>
+                                    <div class="chart-container h-64">
+                                        <canvas id="detailBarChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-span-1 bg-white p-4 rounded-xl ring-1 ring-gray-200">
+                                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Distribusi Sentimen (Detail)</h3>
+                                    <div class="chart-container h-64 flex items-center justify-center">
+                                        <canvas id="detailPieChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Moved: Total Data Sentimen above Akurasi Data -->
+                            <div class="mt-6 mb-4 bg-white p-4 rounded-lg shadow-md text-center">
+                                <p class="text-gray-700 text-lg font-semibold">Total Data Sentimen:</p>
+                                <p id="detail-total-sentiment" class="text-3xl font-bold text-[#4A90E2] mt-2"></p>
+                            </div>
+
+                            <div class="mt-6 bg-white p-4 rounded-lg shadow-md text-center">
+                                <p class="text-gray-700 text-lg font-semibold">Akurasi Data:</p>
+                                <p id="detail-accuracy-display" class="text-3xl font-bold text-[#2196F3] mt-2"></p>
+                            </div>
+
+                            <div class="mt-6 bg-white p-4 rounded-xl ring-1 ring-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2">Awan Kata Kunci Terkait</h3>
+                                <!-- Updated wordCloud for BPJS and Pegadaian -->
+                                <img id="wordCloudImage" src="https://i.postimg.cc/v84xFpRV/image.png" alt="Word Cloud" class="w-full h-auto rounded-lg object-contain mx-auto my-4">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New: Catatan Page Content -->
+                    <div id="catatan-page" class="page-content">
+                        <header class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800">Catatan</h1>
+                            <p class="text-gray-500 mt-1">Informasi tambahan dan referensi untuk data dan visualisasi.</p>
+                        </header>
+                        <div class="bg-gray-50 p-6 rounded-xl ring-1 ring-gray-200">
+                            <ul class="list-disc list-inside text-gray-700 space-y-3 mb-6">
+                                <li>**Tujuan Sistem Informasi:** Sistem informasi ini dirancang sebagai proyek pembelajaran untuk memenuhi tugas akhir kuliah.</li>
+                                <li>**Data Simulasi:** Semua data yang ditampilkan dalam dasbor ini (termasuk grafik dan total sentimen) adalah data simulasi dan tidak mencerminkan angka atau metrik dunia nyata.</li>
+                                <li>**Visualisasi Dinamis:** Grafik pada halaman "Home" disesuaikan secara proporsional berdasarkan "Data Twitter" di bilah sisi. Sedangkan, grafik pada halaman detail memiliki data uniknya sendiri.</li>
+                                <li>**Placeholder Gambar:** Gambar *word cloud* adalah *placeholder* dan tidak dihasilkan secara dinamis berdasarkan data sentimen.</li>
+                                <li>**Desain Responsif:** Sistem informasi ini dirancang untuk responsif di berbagai ukuran layar, dari seluler hingga desktop.</li>
+                                <li>**Perhitungan Persentase:** Persentase pada grafik lingkaran dihitung berdasarkan proporsi data kategori terhadap total data sentimen.</li>
+                                <li>**Referensi Desain:** Tata letak dan elemen visual dasbor ini terinspirasi oleh praktik desain UI modern.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <!-- About Page Content -->
+                    <div id="about-page" class="page-content">
+                        <header class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800">Tentang Sistem Informasi Analisis Sentimen</h1>
+                            <p class="text-gray-500 mt-1">Informasi lebih lanjut tentang sistem informasi Analisis Sentimen ini.</p>
+                        </header>
+                        <div class="bg-gray-50 p-6 rounded-xl ring-1 ring-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Detail</h2>
+                            <p class="text-gray-700">Sistem informasi ini dirancang untuk memvisualisasikan metrik data utama dan sentimen. Dikembangkan menggunakan HTML, Tailwind CSS, dan Chart.js untuk representasi data.</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Register the datalabels plugin globally
+        Chart.register(ChartDataLabels);
+
+        // Global chart instances to manage their lifecycle
+        let homeBarChart = null;
+        let homePieChart = null;
+        let detailBarChart = null;
+        let detailPieChart = null;
+
+        // New helper function for generating random sentiment data around a target total
+        function generateRandomSentimentForApp() {
+            const minTotal = 450;
+            const maxTotal = 550;
+            const total = Math.floor(Math.random() * (maxTotal - minTotal + 1)) + minTotal; // Total between minTotal and maxTotal
+
+            // Generate initial sentiments
+            let positif = Math.floor(Math.random() * (total * 0.7 - total * 0.4 + 1)) + Math.floor(total * 0.4); // 40-70%
+            let negatif = Math.floor(Math.random() * (total * 0.2 - total * 0.05 + 1)) + Math.floor(total * 0.05); // 5-20%
+            let netral = total - positif - negatif;
+
+            // Simple adjustment if netral goes negative
+            if (netral < 0) {
+                // Redistribute negative 'netral' value from positif first
+                positif += netral;
+                netral = 0;
+                // If positif also became negative, redistribute from negatif
+                if (positif < 0) {
+                    negatif += positif;
+                    positif = 0;
+                    if (negatif < 0) negatif = 0; // Final safeguard, should not typically happen
+                }
+            }
+
+            // Ensure the sum is exact, redistribute any remainder to netral
+            const currentSum = positif + negatif + netral;
+            if (currentSum !== total) {
+                netral += (total - currentSum);
+            }
+
+            return {
+                positif: Math.max(0, positif), // Ensure no negative values after adjustments
+                negatif: Math.max(0, negatif),
+                netral: Math.max(0, netral)
+            };
+        }
+
+        // Structured data for all applications
+        const appsData = [
+            {
+                name: 'BPJS',
+                description: 'BPJS adalah layanan publik untuk jaminan kesehatan dan ketenagakerjaan. Analisis ini mencakup data kepuasan pengguna dan efisiensi layanan.',
+                icon: 'https://i.postimg.cc/N0Fp8nh7/image.png',
+                sentiment: { positif: 462, negatif: 42, netral: 80 }, // Updated data
+                wordCloud: 'https://i.postimg.cc/hP2r47t3/image.png', // Updated word cloud
+                accuracy: '87.3%' // Updated data
+            },
+            {
+                name: 'Pegadaian',
+                description: 'Pegadaian menawarkan solusi keuangan melalui pinjaman berbasis gadai, pembiayaan, dan layanan emas. Analisis sentimen ini berfokus pada respons pelanggan terkait layanan dan produk mereka.',
+                icon: 'https://i.postimg.cc/WzF8RqpD/image.png',
+                sentiment: { positif: 400, negatif: 13, netral: 167 }, // Reverted to fixed data
+                accuracy: '85.69%', // Reverted to fixed data
+                wordCloud: 'https://i.postimg.cc/L6fqhL84/image.png',
+            },
+            {
+                name: 'Disdukcapil', // Changed from Sistem Informasi Gamma to Disdukcapil
+                description: 'Dinas Kependudukan dan Pencatatan Sipil (Disdukcapil) menyediakan layanan administrasi kependudukan seperti pembuatan KTP, KK, akta kelahiran, dan akta kematian. Analisis sentimen ini berfokus pada kepuasan masyarakat terhadap proses dan kecepatan pelayanan.', // Updated description
+                icon: 'https://i.postimg.cc/pTZ9Q4yV/image.png', // Updated icon
+                sentiment: { positif: 378, negatif: 15, netral: 110 }, // Updated sentiment data
+                wordCloud: 'https://i.postimg.cc/pdTvpSzM/image.png', // Changed word cloud URL
+                accuracy: '85.1%' // Updated accuracy
+            },
+            {
+                name: 'SAMSAT', // Changed name to SAMSAT
+                description: 'SAMSAT (Sistem Administrasi Manunggal Satu Atap) adalah layanan publik yang mengintegrasikan registrasi kendaraan bermotor, pembayaran pajak kendaraan, dan sumbangan wajib dana kecelakaan lalu lintas. Analisis sentimen ini berfokus pada efisiensi layanan dan kemudahan proses bagi wajib pajak.', // Updated description
+                icon: 'https://i.postimg.cc/kMWmxRZs/image.png', // Updated icon
+                sentiment: { positif: 330, negatif: 18, netral: 151 }, // Updated sentiment data
+                wordCloud: 'https://i.postimg.cc/qBWN7KKG/image.png', // Updated word cloud
+                accuracy: '82.9%' // Updated accuracy
+            }
+            // Removed Sistem Informasi Epsilon and Sistem Informasi Zeta
+        ];
+
+        const wrapLabels = (label, maxWidth) => {
+            if (typeof label !== 'string' || label.length <= maxWidth) {
+                return label;
+            }
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + word).length <= maxWidth) {
+                    currentLine += `${word} `;
+                } else {
+                    lines.push(currentLine.trim());
+                    currentLine = `${word} `;
+                }
+            }
+            lines.push(currentLine.trim());
+            return lines;
+        };
+
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            }
+            return label;
+        };
+        
+        // Function to set the active page and navigation link (GLOBAL SCOPE)
+        // pushState indicates whether to add to history (true for user click), false for popstate/initial load
+        function setActivePage(pageId, navLinkId = null, detailItemName = null, pushState = true) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page-content');
+
+            const activeClasses = ['bg-[#4A90E2]', 'text-white', 'shadow-sm', 'font-semibold', 'border-l-4', 'border-blue-600'];
+            const inactiveClasses = ['text-gray-600', 'hover:bg-gray-200'];
+
+            // Destroy all existing chart instances before switching pages
+            if (homeBarChart) { homeBarChart.destroy(); homeBarChart = null; }
+            if (homePieChart) { homePieChart.destroy(); homePieChart = null; }
+            if (detailBarChart) { detailBarChart.destroy(); detailBarChart = null; }
+            if (detailPieChart) { detailPieChart.destroy(); detailPieChart = null; }
+
+            // Update navigation link styles ONLY if navLinkId is provided (i.e., not a direct detail click)
+            navLinks.forEach(navLink => {
+                navLink.classList.remove(...activeClasses);
+                navLink.classList.add(...inactiveClasses);
+            });
+            if (navLinkId) {
+                const currentNavLink = document.getElementById(navLinkId);
+                if (currentNavLink) {
+                    currentNavLink.classList.remove(...inactiveClasses);
+                    currentNavLink.classList.add(...activeClasses);
+                }
+            }
+
+            // Hide all pages
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Show the target page
+            const currentPage = document.getElementById(pageId);
+            if (currentPage) {
+                currentPage.classList.add('active');
+            }
+
+            // Update browser history
+            if (pushState) {
+                const state = { pageId: pageId, navLinkId: navLinkId, detailItemName: detailItemName };
+                // Use replaceState for initial load or if you don't want a new history entry
+                // Use pushState for regular navigation
+                history.pushState(state, '', `#${pageId.replace('-page', '')}`);
+            }
+
+
+            // Data for sidebar numbers - these are now based on aggregated appsData
+            const totalPositive = appsData.reduce((sum, app) => sum + app.sentiment.positif, 0);
+            const totalNegative = appsData.reduce((sum, app) => sum + app.sentiment.negatif, 0);
+            const totalNeutral = appsData.reduce((sum, app) => sum + app.sentiment.netral, 0);
+            const sidebarTwitterDataAggregated = totalPositive + totalNegative + totalNeutral;
+
+            // Update sidebar numbers
+            document.getElementById('total-aplikasi-data').innerText = appsData.length.toLocaleString('id-ID'); // Assuming each app is one "application"
+            document.getElementById('data-twitter-data').innerText = sidebarTwitterDataAggregated.toLocaleString('id-ID'); 
+
+            // Handle chart rendering based on active page
+            if (pageId === 'home-page') {
+                const barChartCtx = document.getElementById('barChart').getContext('2d');
+                const pieChartCtx = document.getElementById('pieChart').getContext('2d');
+
+                homeBarChart = new Chart(barChartCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Positif', 'Negatif', 'Netral'],
+                        datasets: [{
+                            label: 'Jumlah Sentimen',
+                            data: [totalPositive, totalNegative, totalNeutral], // Use aggregated data
+                            backgroundColor: [
+                                '#61B24E', // Positif
+                                '#D82C6D', // Negatif
+                                '#BDBDBD'  // Netral
+                            ],
+                            borderRadius: 4,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { title: tooltipTitleCallback } },
+                            datalabels: {
+                                color: 'white', font: { weight: 'bold', size: 14 },
+                                formatter: (value) => value.toLocaleString('id-ID'),
+                                anchor: 'center', align: 'center'
+                            }
+                        },
+                        scales: {
+                            x: { stacked: false, grid: { display: false } },
+                            y: {
+                                stacked: false, beginAtZero: true,
+                                grid: { color: '#e0e0e0', borderDash: [2, 4] },
+                                ticks: { font: { size: 12 }, callback: (value) => value.toLocaleString('id-ID') }
+                            }
+                        }
+                    }
+                });
+
+                homePieChart = new Chart(pieChartCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Positif', 'Negatif', 'Netral'],
+                        datasets: [{
+                            data: [totalPositive, totalNegative, totalNeutral], // Use aggregated data
+                            backgroundColor: ['#61B24E', '#D82C6D', '#BDBDBD'],
+                            borderColor: '#fff', borderWidth: 4, hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: 0,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: { callbacks: { title: tooltipTitleCallback } },
+                            datalabels: {
+                                color: 'white', font: { weight: 'bold', size: 14 },
+                                formatter: (value, context) => {
+                                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = (value / total * 100).toFixed(1);
+                                    return `${value.toLocaleString('id-ID')}\n(${percentage}%)`;
+                                },
+                                anchor: 'center', align: 'center'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Handle detail page content if it's the target
+            if (pageId === 'detail-layanan-page' && detailItemName) {
+                const selectedApp = appsData.find(app => app.name === detailItemName);
+
+                if (!selectedApp) {
+                    console.error("Sistem Informasi tidak ditemukan:", detailItemName);
+                    // Optionally redirect to a 404 or default page
+                    return;
+                }
+
+                document.getElementById('detail-layanan-title').innerText = `Detail ${selectedApp.name}`;
+                document.getElementById('detail-layanan-description').innerText = `Informasi lebih lanjut tentang layanan ini akan ditampilkan di sini.` ; 
+                document.getElementById('detail-layanan-item-name').innerText = selectedApp.name;
+
+                const appSpecificDescriptionDiv = document.getElementById('app-specific-description');
+                const detailTotalSentimentDisplay = document.getElementById('detail-total-sentiment');
+                const wordCloudImage = document.getElementById('wordCloudImage');
+                const detailAccuracyDisplay = document.getElementById('detail-accuracy-display'); 
+
+                // Populate dynamic content based on selectedApp
+                appSpecificDescriptionDiv.innerHTML = `<p class="mb-2">${selectedApp.description}</p>`;
+                
+                // Calculate total sentiment for the detail page
+                const totalDetailSentiment = selectedApp.sentiment.positif + selectedApp.sentiment.negatif + selectedApp.sentiment.netral;
+
+                // Update the total sentiment display
+                detailTotalSentimentDisplay.innerText = totalDetailSentiment.toLocaleString('id-ID');
+                
+                // Update the word cloud image source
+                wordCloudImage.src = selectedApp.wordCloud;
+                wordCloudImage.alt = `Word Cloud untuk ${selectedApp.name}`;
+
+                // Update the accuracy display
+                detailAccuracyDisplay.innerText = selectedApp.accuracy;
+
+
+                // Initialize charts for the detail page
+                const detailBarChartCtx = document.getElementById('detailBarChart').getContext('2d');
+                const detailPieChartCtx = document.getElementById('detailPieChart').getContext('2d');
+
+                detailBarChart = new Chart(detailBarChartCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Positif', 'Negatif', 'Netral'],
+                        datasets: [{
+                            label: 'Jumlah Sentimen',
+                            data: [selectedApp.sentiment.positif, selectedApp.sentiment.negatif, selectedApp.sentiment.netral],
+                            backgroundColor: ['#61B24E', '#D82C6D', '#BDBDBD'],
+                            borderRadius: 4, borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { title: tooltipTitleCallback } },
+                            datalabels: {
+                                color: 'white', font: { weight: 'bold', size: 14 },
+                                formatter: (value) => value.toLocaleString('id-ID'),
+                                anchor: 'center', align: 'center'
+                            }
+                        },
+                        scales: {
+                            x: { stacked: false, grid: { display: false } },
+                            y: {
+                                stacked: false, beginAtZero: true,
+                                grid: { color: '#e0e0e0', borderDash: [2, 4] },
+                                ticks: { font: { size: 12 }, callback: (value) => value.toLocaleString('id-ID') }
+                            }
+                        }
+                    }
+                });
+
+                detailPieChart = new Chart(detailPieChartCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Positif', 'Negatif', 'Netral'],
+                        datasets: [{
+                            data: [selectedApp.sentiment.positif, selectedApp.sentiment.negatif, selectedApp.sentiment.netral],
+                            backgroundColor: ['#61B24E', '#D82C6D', '#BDBDBD'],
+                            borderColor: '#fff', borderWidth: 4, hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: 0,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: { callbacks: { title: tooltipTitleCallback } },
+                            datalabels: {
+                                color: 'white', font: { weight: 'bold', size: 14 },
+                                formatter: (value, context) => {
+                                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = (value / total * 100).toFixed(1);
+                                    return `${value.toLocaleString('id-ID')}\n(${percentage}%)`;
+                                },
+                                anchor: 'center', align: 'center'
+                            }
+                        }
+                    }
+                });
+            }
+        } // End of setActivePage function
+
+        // Ensure DOM is fully loaded before running script for charts and event listeners
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Dynamically generate app items in "Daftar" page
+            const daftarGrid = document.querySelector('#daftar-page .grid');
+            appsData.forEach(app => {
+                const appItemDiv = document.createElement('div');
+                appItemDiv.className = 'flex flex-col items-center p-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 w-full max-w-[120px] cursor-pointer';
+                // Pass pushState as true for user-initiated clicks
+                appItemDiv.setAttribute('onclick', `setActivePage('detail-layanan-page', null, '${app.name}', true)`); 
+                appItemDiv.innerHTML = `
+                    <img src="${app.icon}" alt="${app.name}" class="w-20 h-20 rounded-full mb-2 object-cover">
+                    <p class="text-gray-700 text-sm font-medium text-center">${app.name}</p>
+                `;
+                daftarGrid.appendChild(appItemDiv);
+            });
+
+
+            // Initial page load based on URL hash or default to home
+            const initialHash = window.location.hash.substring(1);
+            if (initialHash) {
+                const pageIdFromHash = `${initialHash}-page`;
+                const navLinkFromHash = `nav-${initialHash}`;
+                // Use replaceState for initial load to avoid adding a duplicate entry
+                setActivePage(pageIdFromHash, navLinkFromHash, null, false); 
+            } else {
+                setActivePage('home-page', 'nav-home', null, false);
+            }
+
+            // Page navigation logic for sidebar links
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default anchor link behavior
+                    const targetPageId = link.getAttribute('href').substring(1) + '-page'; 
+                    const navLinkId = link.id;
+                    // Pass pushState as true for user-initiated clicks
+                    setActivePage(targetPageId, navLinkId, null, true); 
+                });
+            });
+
+            // Handle browser's back/forward buttons
+            window.onpopstate = function(event) {
+                if (event.state) {
+                    // Restore the page based on the state in history
+                    setActivePage(event.state.pageId, event.state.navLinkId, event.state.detailItemName, false); // Don't pushState again
+                } else {
+                    // Fallback to home page if no state is found (e.g., first load)
+                    setActivePage('home-page', 'nav-home', null, false);
+                }
+            };
+        });
+    </script>
+</body>
+</html>
